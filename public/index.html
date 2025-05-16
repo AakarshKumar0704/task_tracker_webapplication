@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Task Tracker - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4 text-center">Login</h2>
+
+    <input id="email" type="email" placeholder="Email" class="border p-2 w-full mb-3 rounded" />
+    <input id="password" type="password" placeholder="Password" class="border p-2 w-full mb-4 rounded" />
+
+    <div class="flex justify-between items-center">
+      <button onclick="redirectToSignup()" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">
+        Sign Up
+      </button>
+      <button onclick="login()" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">
+        Login
+      </button>
+    </div>
+
+    <p id="msg" class="text-red-500 mt-3 text-center"></p>
+  </div>
+
+  <script>
+    function redirectToSignup() {
+      window.location.href = "signup.html";
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        window.location.href = "dashboard.html";
+      } else {
+        document.getElementById("msg").innerText = data.error || "Login failed!";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold">Dashboard</h2>
+      <button onclick="logout()" class="bg-red-500 text-white px-4 py-1 rounded">Logout</button>
+    </div>
+
+    <input id="projectName" placeholder="New Project Name" class="border p-2 w-full mb-4" />
+    <button onclick="createProject()" class="bg-green-600 text-white p-2 w-full mb-6">Create Project</button>
+
+    <div class="mb-4">
+      <label class="mr-2 font-medium">Filter by Status:</label>
+      <select id="statusFilter" onchange="loadProjects()" class="border p-2">
+        <option value="All">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Completed">Completed</option>
+      </select>
+    </div>
+
+    <div id="projectList"></div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "index.html";
+
+    async function createProject() {
+      const name = document.getElementById("projectName").value;
+      const res = await fetch("/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+      await res.json();
+      loadProjects();
+    }
+
+    async function loadProjects() {
+      const statusFilter = document.getElementById("statusFilter").value;
+      const projRes = await fetch("/projects", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const taskRes = await fetch("/tasks", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const projects = await projRes.json();
+      let tasks = await taskRes.json();
+
+      if (statusFilter !== "All") {
+        tasks = tasks.filter(task => task.status === statusFilter);
+      }
+
+      const container = document.getElementById("projectList");
+      container.innerHTML = "";
+
+      projects.forEach((proj) => {
+        const div = document.createElement("div");
+        div.className = "border p-4 mb-6 rounded bg-gray-50";
+        div.innerHTML = `
+          <h3 class="font-bold text-lg mb-2">${proj.name}</h3>
+          <div class="flex gap-2 mb-4 flex-wrap">
+            <input placeholder="Title" id="title-${proj._id}" class="border p-2 flex-1" />
+            <input placeholder="Description" id="desc-${proj._id}" class="border p-2 flex-1" />
+            <input type="date" id="due-${proj._id}" class="border p-2" />
+            <select id="priority-${proj._id}" class="border p-2">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+            <button onclick="addTask('${proj._id}')" class="bg-blue-600 text-white px-4 py-2 rounded">Add Task</button>
+          </div>
+          <div id="taskList-${proj._id}"></div>
+        `;
+
+        const taskList = tasks.filter(task => task.projectId === proj._id);
+        taskList.forEach(task => {
+          const taskDiv = document.createElement("div");
+          taskDiv.className = "border rounded p-3 mb-2 bg-white flex justify-between items-center";
+          taskDiv.innerHTML = `
+            <div>
+              <h4 class="font-semibold">${task.title}</h4>
+              <p class="text-sm text-gray-600">${task.description}</p>
+              <p class="text-xs">Due: ${task.dueDate?.split("T")[0] || "N/A"} | Priority: ${task.priority || "N/A"} | Status: ${task.status}</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editTask('${task._id}')" class="text-blue-500 underline">Edit</button>
+              <button onclick="deleteTask('${task._id}')" class="text-red-500 underline">Delete</button>
+            </div>
+          `;
+          div.querySelector(`#taskList-${proj._id}`).appendChild(taskDiv);
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    async function addTask(projectId) {
+      const title = document.getElementById(`title-${projectId}`).value;
+      const description = document.getElementById(`desc-${projectId}`).value;
+      const dueDate = document.getElementById(`due-${projectId}`).value;
+      const priority = document.getElementById(`priority-${projectId}`).value;
+
+      await fetch("/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ projectId, title, description, dueDate, priority })
+      });
+      loadProjects();
+    }
+
+    async function deleteTask(id) {
+      await fetch(`/tasks/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      loadProjects();
+    }
+
+    async function editTask(id) {
+      const newTitle = prompt("New title:");
+      const newDesc = prompt("New description:");
+      const newDue = prompt("New due date (YYYY-MM-DD):");
+      const newPriority = prompt("New priority (Low, Medium, High):");
+      const newStatus = prompt("New status (Pending, Completed):");
+
+      await fetch(`/tasks/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          description: newDesc,
+          dueDate: newDue,
+          priority: newPriority,
+          status: newStatus
+        })
+      });
+      loadProjects();
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "index.html";
+    }
+
+    loadProjects();
+  </script>
+</body>
+</html>
