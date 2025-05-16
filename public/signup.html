@@ -18,13 +18,14 @@
   </div>
 
   <script>
+    const backendURL = "https://task-tracker-webapplication-1.onrender.com";
     async function signup() {
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const country = document.getElementById("country").value;
 
-      const res = await fetch("/signup", {
+      const res = await fetch(`${backendURL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, country })
