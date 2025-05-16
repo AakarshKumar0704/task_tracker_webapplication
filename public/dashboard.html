@@ -29,12 +29,13 @@
   </div>
 
   <script>
+    const backendURL = "https://task-tracker-webapplication-1.onrender.com";
     const token = localStorage.getItem("token");
     if (!token) window.location.href = "index.html";
 
     async function createProject() {
       const name = document.getElementById("projectName").value;
-      const res = await fetch("/projects", {
+      const res = await fetch(`${backendURL}/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,10 +49,10 @@
 
     async function loadProjects() {
       const statusFilter = document.getElementById("statusFilter").value;
-      const projRes = await fetch("/projects", {
+      const projRes = await fetch(`${backendURL}/projects`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const taskRes = await fetch("/tasks", {
+      const taskRes = await fetch(${backendURL}/tasks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -112,7 +113,7 @@
       const dueDate = document.getElementById(`due-${projectId}`).value;
       const priority = document.getElementById(`priority-${projectId}`).value;
 
-      await fetch("/tasks", {
+      await fetch(`${backendURL}/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,7 +125,7 @@
     }
 
     async function deleteTask(id) {
-      await fetch(`/tasks/${id}`, {
+      await fetch(`${backendURL}/tasks/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`
@@ -140,7 +141,7 @@
       const newPriority = prompt("New priority (Low, Medium, High):");
       const newStatus = prompt("New status (Pending, Completed):");
 
-      await fetch(`/tasks/${id}`, {
+      await fetch(`${backendURL}/tasks/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
